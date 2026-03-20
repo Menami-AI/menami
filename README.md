@@ -94,7 +94,7 @@ Full schema reference: [docs/tools.md](./docs/tools.md)
 ## For Developers (CLI)
 
 ```bash
-npx menami login
+npx @menami/cli login
 ```
 
 ### Commands

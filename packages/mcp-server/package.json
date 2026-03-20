@@ -11,7 +11,16 @@
     "build": "tsc",
     "start": "node dist/index.js"
   },
-  "keywords": ["mcp", "food", "restaurant", "ai", "agent", "menami", "recommendations", "booking"],
+  "keywords": [
+    "mcp",
+    "food",
+    "restaurant",
+    "ai",
+    "agent",
+    "menami",
+    "recommendations",
+    "booking"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -20,11 +29,14 @@
   },
   "homepage": "https://getmenami.com",
   "bugs": "https://github.com/menami-ai/menami/issues",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "dependencies": {
     "open": "^10.0.0"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
     "typescript": "^5.0.0"
   }
 }

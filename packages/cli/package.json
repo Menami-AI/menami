@@ -1,0 +1,34 @@
+{
+  "name": "menami",
+  "version": "0.1.0",
+  "description": "Menami — your personal food agent CLI",
+  "main": "dist/index.js",
+  "bin": {
+    "menami": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "keywords": ["menami", "food", "restaurant", "cli", "recommendations", "booking"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/menami-ai/menami.git",
+    "directory": "packages/cli"
+  },
+  "homepage": "https://getmenami.com",
+  "bugs": "https://github.com/menami-ai/menami/issues",
+  "files": ["dist"],
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.0.0",
+    "ora": "^8.0.0",
+    "open": "^10.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^4.0.0",
+    "tsx": "^4.0.0"
+  }
+}

@@ -1,6 +1,6 @@
 # API Reference
 
-Base URL: `https://busboy-api-production.up.railway.app`
+Base URL: `https://api.getmenami.com`
 
 All endpoints (except `/oauth/*`) require:
 ```
@@ -96,7 +96,7 @@ Get personalized restaurant recommendations from the food agent.
 }
 ```
 
-**Onboarding mode:** Set `"onboarding": true` in constraints to run the 5-step taste profile setup. The agent returns `"onboardingComplete": true` when the flow is done.
+**Onboarding mode:** Set `"onboarding": true` in constraints to run the interactive taste profile setup. The agent returns `"onboardingComplete": true` when the flow is done.
 
 ---
 
@@ -118,7 +118,7 @@ Search the restaurant knowledge graph.
 
 **Example:**
 ```bash
-curl "https://busboy-api-production.up.railway.app/api/v2/restaurants/search?city=sf&cuisine=japanese&priceMax=3" \
+curl "https://api.getmenami.com/api/v2/restaurants/search?city=sf&cuisine=japanese&priceMax=3" \
   -H "Authorization: Bearer $TOKEN"
 ```
 
@@ -150,7 +150,7 @@ Get full details for a restaurant.
 
 **Example:**
 ```bash
-curl "https://busboy-api-production.up.railway.app/api/v2/restaurants/rst_abc123" \
+curl "https://api.getmenami.com/api/v2/restaurants/rst_abc123" \
   -H "Authorization: Bearer $TOKEN"
 ```
 

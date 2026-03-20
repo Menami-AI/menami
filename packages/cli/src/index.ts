@@ -60,7 +60,7 @@ program
 
 program
   .command('onboard')
-  .description('Interactive taste profile setup (5-step wizard)')
+  .description('Interactive taste profile setup (interactive wizard)')
   .action(() => onboardInteractive());
 
 program

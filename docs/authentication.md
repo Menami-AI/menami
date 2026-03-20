@@ -10,7 +10,7 @@ Menami uses OAuth 2.0 Authorization Code flow with PKCE (Proof Key for Code Exch
 | `/oauth/token` | POST | Exchange authorization code for tokens |
 | `/api/v2/auth/refresh` | POST | Refresh an expired access token |
 
-Base URL: `https://busboy-api-production.up.railway.app`
+Base URL: `https://api.getmenami.com`
 
 ---
 
@@ -56,7 +56,7 @@ Verify the `state` parameter matches what you sent to prevent CSRF attacks.
 ### Step 4: Exchange Code for Tokens
 
 ```bash
-curl -X POST https://busboy-api-production.up.railway.app/oauth/token \
+curl -X POST https://api.getmenami.com/oauth/token \
   -H "Content-Type: application/json" \
   -d '{
     "grant_type": "authorization_code",
@@ -90,7 +90,7 @@ Authorization: Bearer men_...
 Access tokens expire after 1 hour. Refresh using the refresh token:
 
 ```bash
-curl -X POST https://busboy-api-production.up.railway.app/api/v2/auth/refresh \
+curl -X POST https://api.getmenami.com/api/v2/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{"refreshToken": "men_..."}'
 ```
@@ -115,7 +115,7 @@ The CLI and MCP server store tokens at `~/.menami/config.json`:
   "accessToken": "men_...",
   "refreshToken": "men_...",
   "expiresAt": 1744000000000,
-  "serverUrl": "https://busboy-api-production.up.railway.app"
+  "serverUrl": "https://api.getmenami.com"
 }
 ```
 

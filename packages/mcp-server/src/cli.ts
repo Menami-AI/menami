@@ -36,7 +36,7 @@ async function main() {
   }
 
   if (command === 'connect') {
-    const apiUrl = process.env.MENAMI_API_URL || 'https://busboy-api-production.up.railway.app';
+    const apiUrl = process.env.MENAMI_API_URL || 'https://api.getmenami.com';
     console.log('Connecting to Menami...');
     try {
       await connect(apiUrl);
@@ -93,7 +93,7 @@ async function main() {
         }
 
         // Call the Menami API
-        const apiUrl = process.env.MENAMI_API_URL || 'https://busboy-api-production.up.railway.app';
+        const apiUrl = process.env.MENAMI_API_URL || 'https://api.getmenami.com';
         const response = await fetch(`${apiUrl}/api/mcp/tools/${request.params.name}`, {
           method: 'POST',
           headers: {

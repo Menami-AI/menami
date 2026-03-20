@@ -1,33 +1,39 @@
-# Menami
+<p align="center">
+  <img src="assets/logo.svg" alt="menami" width="320" />
+</p>
 
-**Your personal food agent.** Personalized restaurant recommendations, table bookings, and delivery orders — via MCP protocol, CLI, or REST API.
+<p align="center">
+  <strong>Your personal food agent.</strong><br>
+  AI-powered restaurant recommendations, table bookings, and delivery — via MCP, CLI, or API.
+</p>
 
-[![npm (CLI)](https://img.shields.io/npm/v/menami?label=menami%20CLI&color=D95A28)](https://www.npmjs.com/package/menami)
-[![npm (MCP)](https://img.shields.io/npm/v/%40menami%2Fmcp-server?label=%40menami%2Fmcp-server&color=D95A28)](https://www.npmjs.com/package/@menami/mcp-server)
-[![License: MIT](https://img.shields.io/badge/License-MIT-D95A28.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-D95A28.svg" alt="License: MIT"></a>
+  <a href="https://getmenami.com"><img src="https://img.shields.io/badge/getmenami.com-D95A28" alt="getmenami.com"></a>
+</p>
+
+---
+
+## Why Menami?
+
+Most restaurant APIs give you data. Menami gives you an **agent that knows you**.
+
+- **It learns your taste.** Not just "Italian" — it knows you love smoky mole, hate loud restaurants, and your partner is allergic to shellfish.
+- **It acts on your behalf.** Your anniversary is in 3 weeks? Menami already booked a table at the impossible-to-get restaurant that matches both your taste profiles.
+- **It gets better every meal.** Every rating, every feedback, every "I tried that place and loved it" makes the next recommendation sharper.
+- **It works everywhere.** Use it from Claude, from the terminal, from your own app, or just text it on WhatsApp.
+
+Menami covers **San Francisco, New York City, and Mexico City** with 3,000+ restaurants in the knowledge graph.
 
 ---
 
 ## Quick Start
-
-Choose your path:
 
 | I want to... | Use this |
 |---|---|
 | Use Menami inside Claude Desktop or another AI agent | [MCP Server](#for-ai-agents-mcp) |
 | Use Menami from the terminal | [CLI](#for-developers-cli) |
 | Build an app on top of Menami | [REST API](#for-apps-api) |
-
----
-
-## What Can Menami Do?
-
-- **Personalized recommendations** — powered by your taste graph (cuisine preferences, dietary restrictions, price range, past ratings)
-- **Restaurant search** — query the knowledge graph by city, cuisine, or natural language
-- **Table booking** — check availability and reserve via OpenTable/Resy adapters
-- **Delivery orders** — place pickup or delivery orders with integrated payment
-- **Feedback loop** — rate experiences; your taste profile improves with every meal
-- **Occasion planning** — save upcoming birthdays, anniversaries, and trips; get proactive restaurant suggestions
 
 ---
 
@@ -45,7 +51,10 @@ This opens a browser OAuth flow and saves credentials to `~/.menami/config.json`
 
 ### 2. Add to Claude Desktop
 
-Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or the equivalent on your platform:
+Edit your Claude Desktop config:
+
+- **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 
 ```json
 {
@@ -58,101 +67,66 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop. You'll see Menami tools available in the tool panel.
+Restart Claude Desktop. You'll see Menami tools in the tool panel.
 
-### 3. Try it in Claude
+### 3. Try it
 
-```
-User: Find me a good sushi place for a date night in San Francisco. My budget is $80-120 per person.
-```
+> "Find me a good sushi place for a date night in San Francisco. Budget is $80-120 per person."
 
 Claude will call `menami_consult_agent` and return personalized recommendations from your taste profile.
 
-### Environment Variables
+### Available Tools
 
-| Variable | Default | Description |
-|---|---|---|
-| `MENAMI_API_URL` | `https://busboy-api-production.up.railway.app` | Override API base URL |
+| Tool | Description |
+|---|---|
+| `menami_consult_agent` | Personalized restaurant recommendations based on taste, location, and occasion |
+| `menami_book_table` | Check availability and book a table |
+| `menami_place_order` | Place a delivery or pickup order |
+| `menami_submit_feedback` | Rate a dining experience — improves future recommendations |
+| `menami_get_taste_profile` | View your taste profile (cuisines, dietary, price range, favorites) |
+| `menami_get_restaurant` | Get restaurant details (menu, hours, reviews, location) |
+| `menami_manage_occasions` | Manage birthdays, anniversaries, and trips for proactive suggestions |
+
+Full schema reference: [docs/tools.md](./docs/tools.md)
 
 ---
 
 ## For Developers (CLI)
 
 ```bash
-npm install -g menami
+npx menami login
 ```
 
 ### Commands
 
-#### `menami login`
-Authenticate with Menami (OAuth PKCE browser flow).
-
 ```bash
-menami login
-menami login --server https://api.getmenami.com
-```
-
-#### `menami recommend [message]`
-Get personalized recommendations. Without a message, starts interactive mode.
-
-```bash
+# Get personalized recommendations
 menami recommend "best ramen for a cold night"
 menami recommend --cuisine japanese --occasion date_night
-menami recommend   # interactive mode
-```
+menami recommend                    # interactive mode
 
-#### `menami search`
-Search the restaurant knowledge graph.
-
-```bash
+# Search the knowledge graph
 menami search --city "San Francisco" --cuisine italian
-menami search --city "Mexico City" --query "tacos de guisado" --price-max 2
-```
+menami search --city "Mexico City" --query "tacos de guisado"
 
-#### `menami restaurant <id>`
-Get full details for a restaurant.
+# Get restaurant details
+menami restaurant <id>
+menami restaurant <id> --json
 
-```bash
-menami restaurant rst_abc123
-menami restaurant rst_abc123 --json
-```
-
-#### `menami profile`
-View your taste profile.
-
-```bash
+# View your taste profile
 menami profile
 menami profile --format full
-```
 
-#### `menami onboard`
-Interactive 5-step taste profile setup wizard.
-
-```bash
+# Set up your taste profile (interactive wizard)
 menami onboard
-```
 
-#### `menami feedback <restaurant-id>`
-Rate a dining experience. Updates your taste profile.
+# Rate a dining experience
+menami feedback <restaurant-id> --rating 4 --text "Amazing tonkotsu, but noisy"
 
-```bash
-menami feedback rst_abc123 --rating 4 --text "Amazing tonkotsu, but noisy"
-menami feedback rst_abc123 --rating 5 --occasion date_night
-```
+# Book a table
+menami book <restaurant-id> --date 2026-04-15 --time 19:30 --party 2
 
-#### `menami book <restaurant-id>`
-Book a table.
-
-```bash
-menami book rst_abc123 --date 2026-04-15 --time 19:30 --party 2 --name "Alice" --email alice@example.com
-menami book rst_abc123 --date 2026-04-15 --time 19:30 --party 4 --name "Bob" --email bob@example.com --requests "window seat if possible"
-```
-
-#### `menami occasions [action] [value]`
-Manage dining occasions.
-
-```bash
-menami occasions              # list all occasions
+# Manage occasions
 menami occasions add birthday
 menami occasions add anniversary
 ```
@@ -161,61 +135,62 @@ menami occasions add anniversary
 
 | Flag | Description |
 |---|---|
-| `--json` | Output raw JSON instead of formatted text |
+| `--json` | Output raw JSON |
 | `--help` | Show help for any command |
 | `--version` | Show version |
-
-### Environment Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `MENAMI_API_URL` | `https://busboy-api-production.up.railway.app` | Override API base URL (useful for local dev) |
 
 ---
 
 ## For Apps (API)
 
-Base URL: `https://busboy-api-production.up.railway.app` (use `https://api.getmenami.com` when custom domain is live)
+Base URL: `https://api.getmenami.com`
 
-All endpoints require a Bearer token obtained via OAuth PKCE. See [Authentication](#authentication).
+All endpoints require a Bearer token. See [Authentication](#authentication).
 
-### Key Endpoints
+### Recommendations
 
 ```bash
-# Get personalized recommendations
-curl -X POST https://busboy-api-production.up.railway.app/api/v2/recommendations \
+curl -X POST https://api.getmenami.com/v2/recommendations \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"message": "best sushi for a date night", "constraints": {"occasion": "date_night"}}'
+  -d '{"message": "date night Italian restaurant"}'
+```
 
-# Search restaurants
-curl "https://busboy-api-production.up.railway.app/api/v2/restaurants/search?city=sf&cuisine=japanese" \
+### Search Restaurants
+
+```bash
+curl "https://api.getmenami.com/v2/restaurants/search?city=sf&cuisine=japanese" \
   -H "Authorization: Bearer $TOKEN"
+```
 
-# Get restaurant details
-curl "https://busboy-api-production.up.railway.app/api/v2/restaurants/rst_abc123" \
-  -H "Authorization: Bearer $TOKEN"
+### Book a Table
 
-# Get taste profile
-curl "https://busboy-api-production.up.railway.app/api/v2/profile" \
-  -H "Authorization: Bearer $TOKEN"
+```bash
+curl -X POST https://api.getmenami.com/v2/bookings \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "restaurantId": "rst_abc123",
+    "datetime": "2026-04-15T19:30:00",
+    "partySize": 2,
+    "guest": {"name": "Alice", "email": "alice@example.com"}
+  }'
+```
 
-# Submit feedback
-curl -X POST https://busboy-api-production.up.railway.app/api/v2/feedback \
+### Submit Feedback
+
+```bash
+curl -X POST https://api.getmenami.com/v2/feedback \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d '{"restaurantId": "rst_abc123", "overallRating": 5, "feedbackText": "Perfect omakase"}'
+```
 
-# Book a table
-curl -X POST https://busboy-api-production.up.railway.app/api/v2/bookings \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"restaurantId": "rst_abc123", "datetime": "2026-04-15T19:30:00", "partySize": 2, "guest": {"name": "Alice", "email": "alice@example.com"}}'
+### Get Taste Profile
 
-# Token refresh
-curl -X POST https://busboy-api-production.up.railway.app/api/v2/auth/refresh \
-  -H "Content-Type: application/json" \
-  -d '{"refreshToken": "$REFRESH_TOKEN"}'
+```bash
+curl https://api.getmenami.com/v2/profile \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 Full endpoint reference: [docs/api-reference.md](./docs/api-reference.md)
@@ -224,47 +199,29 @@ Full endpoint reference: [docs/api-reference.md](./docs/api-reference.md)
 
 ## Authentication
 
-Menami uses OAuth 2.0 with PKCE (no client secrets required — safe for native apps and CLIs).
-
-### Flow Overview
+Menami uses **OAuth 2.0 with PKCE** — no client secrets needed. Safe for CLIs, native apps, and AI agents.
 
 ```
-1. Generate code_verifier (random 32-byte base64url string)
-2. Derive code_challenge = SHA256(code_verifier) encoded as base64url
-3. Redirect user to: GET /oauth/authorize
-      ?response_type=code
-      &redirect_uri=http://localhost:19284/callback
-      &code_challenge=<challenge>
-      &code_challenge_method=S256
-      &state=<random>
-4. User authenticates in browser
-5. Server redirects to callback with ?code=<auth_code>&state=<state>
-6. Exchange: POST /oauth/token
-      {"grant_type": "authorization_code", "code": "...", "redirect_uri": "...", "code_verifier": "..."}
-7. Receive: {"access_token": "...", "refresh_token": "...", "expires_in": 3600}
-8. Refresh: POST /api/v2/auth/refresh
-      {"refreshToken": "..."}
+1. Generate code_verifier + code_challenge (SHA-256)
+2. Open browser → /oauth/authorize?code_challenge=...
+3. User authenticates
+4. Receive auth code at localhost callback
+5. Exchange code + verifier for access_token + refresh_token
+6. Use Bearer token for all API calls
+7. Refresh when expired via POST /v2/auth/refresh
 ```
 
-Tokens are stored at `~/.menami/config.json` (permissions: 600).
+Tokens are stored at `~/.menami/config.json`.
 
 Full details: [docs/authentication.md](./docs/authentication.md)
 
 ---
 
-## Available Tools (MCP)
+## Configuration
 
-| Tool | Description |
-|---|---|
-| `menami_consult_agent` | Get personalized restaurant recommendations based on your taste profile, location, and occasion |
-| `menami_book_table` | Book a table at a restaurant — checks availability and creates a reservation |
-| `menami_place_order` | Place a delivery or pickup order with item selection and payment |
-| `menami_submit_feedback` | Rate a dining experience — updates your taste profile for better future recommendations |
-| `menami_get_taste_profile` | View your full taste profile: cuisine preferences, dietary restrictions, price range, favorite dishes |
-| `menami_get_restaurant` | Get details for a specific restaurant: menu, hours, reviews, location |
-| `menami_manage_occasions` | Create and manage special occasions (birthdays, anniversaries, trips) with proactive reminders |
-
-Full schema reference: [docs/tools.md](./docs/tools.md)
+| Variable | Default | Description |
+|---|---|---|
+| `MENAMI_API_URL` | `https://api.getmenami.com` | Override API base URL |
 
 ---
 
@@ -273,27 +230,24 @@ Full schema reference: [docs/tools.md](./docs/tools.md)
 ```
 menami/
 ├── packages/
-│   ├── mcp-server/          # @menami/mcp-server — MCP server for AI agents
+│   ├── mcp-server/        # @menami/mcp-server — for AI agents
 │   │   └── src/
-│   │       ├── cli.ts       # npx entry point (connect + stdio server)
-│   │       ├── index.ts     # package exports
-│   │       ├── tools.ts     # 7 MCP tool definitions with JSON Schema
-│   │       ├── types.ts     # TypeScript interfaces
-│   │       └── auth.ts      # OAuth PKCE flow
-│   └── cli/                 # menami — terminal CLI
+│   │       ├── cli.ts     # npx entry point (connect + MCP stdio server)
+│   │       ├── tools.ts   # 7 MCP tool definitions with JSON Schema
+│   │       ├── types.ts   # TypeScript interfaces
+│   │       └── auth.ts    # OAuth PKCE flow
+│   └── cli/               # menami — terminal CLI
 │       └── src/
-│           ├── index.ts     # Commander.js entry point (9 commands)
-│           ├── auth.ts      # PKCE helpers
-│           ├── client.ts    # HTTP client with auto token refresh
-│           ├── config.ts    # ~/.menami/config.json persistence
-│           ├── format.ts    # Terminal output formatting
-│           └── commands/    # One file per command
+│           ├── index.ts   # Commander.js (9 commands)
+│           ├── commands/  # One file per command
+│           ├── client.ts  # HTTP client with auto token refresh
+│           └── config.ts  # ~/.menami/config.json persistence
 ├── docs/
-│   ├── authentication.md
-│   ├── api-reference.md
-│   └── tools.md
-└── .github/workflows/
-    └── publish.yml          # CI/CD: build on push, publish on tag
+│   ├── api-reference.md   # Full REST API docs
+│   ├── authentication.md  # OAuth PKCE details
+│   └── tools.md           # MCP tool schemas
+└── assets/
+    └── logo.svg
 ```
 
 ---
@@ -306,14 +260,16 @@ menami/
 4. Run tests: `npm test`
 5. Open a pull request
 
-Bug reports and feature requests welcome via [GitHub Issues](https://github.com/menami-ai/menami/issues).
+Bug reports and feature requests: [GitHub Issues](https://github.com/menami-ai/menami/issues)
 
 ---
 
 ## License
 
-MIT — see [LICENSE](./LICENSE) for full text.
+MIT — see [LICENSE](./LICENSE).
 
 ---
 
-Built by the Menami team. Learn more at [getmenami.com](https://getmenami.com).
+<p align="center">
+  Built by the Menami team. <a href="https://getmenami.com">getmenami.com</a>
+</p>

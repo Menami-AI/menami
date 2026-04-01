@@ -20,7 +20,7 @@ export function createClient(): ApiClient {
   function getBaseUrl(): string {
     if (process.env.MENAMI_API_URL) return process.env.MENAMI_API_URL;
     const config = loadConfig();
-    return config?.serverUrl ?? 'https://api.menami.com';
+    return config?.serverUrl ?? 'https://api.getmenami.com';
   }
 
   async function getToken(): Promise<string> {

@@ -24,7 +24,7 @@ describe('config', () => {
     });
 
     it('returns parsed config when file exists', () => {
-      const config = { accessToken: 'men_abc', refreshToken: 'men_xyz', expiresAt: 9999999999999, serverUrl: 'https://api.menami.com' };
+      const config = { accessToken: 'men_abc', refreshToken: 'men_xyz', expiresAt: 9999999999999, serverUrl: 'https://api.getmenami.com' };
       vi.mocked(fs.existsSync).mockReturnValue(true);
       vi.mocked(fs.readFileSync).mockReturnValue(JSON.stringify(config));
       expect(loadConfig()).toEqual(config);

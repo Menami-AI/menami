@@ -21,14 +21,14 @@ describe('login command', () => {
 
   it('runs full login flow', async () => {
     mockGeneratePkce.mockReturnValue({ verifier: 'v', challenge: 'c' });
-    mockBuildAuthUrl.mockReturnValue('https://api.menami.com/oauth/authorize?...');
+    mockBuildAuthUrl.mockReturnValue('https://api.getmenami.com/oauth/authorize?...');
     mockWaitForCallback.mockResolvedValue('auth_code_123');
     mockExchangeCode.mockResolvedValue(undefined);
 
     const logs: string[] = [];
-    await loginAction({ server: 'https://api.menami.com' }, (msg: string) => logs.push(msg));
+    await loginAction({ server: 'https://api.getmenami.com' }, (msg: string) => logs.push(msg));
 
-    expect(mockExchangeCode).toHaveBeenCalledWith('https://api.menami.com', 'auth_code_123', 'v');
+    expect(mockExchangeCode).toHaveBeenCalledWith('https://api.getmenami.com', 'auth_code_123', 'v');
     expect(logs.some(l => l.includes('Connected'))).toBe(true);
   });
 
@@ -41,7 +41,7 @@ describe('login command', () => {
     const errLogs: string[] = [];
 
     await loginAction(
-      { server: 'https://api.menami.com' },
+      { server: 'https://api.getmenami.com' },
       (msg: string) => logs.push(msg),
       (msg: string) => errLogs.push(msg),
     );

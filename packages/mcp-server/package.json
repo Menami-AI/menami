@@ -1,7 +1,7 @@
 {
   "name": "@menami/mcp-server",
-  "version": "0.1.0",
-  "description": "Menami Food Agent — MCP server for AI assistants",
+  "version": "0.1.1",
+  "description": "Menami Food Agent — MCP server for AI assistants. The food intelligence layer for the agentic internet.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "bin": {
@@ -9,34 +9,17 @@
   },
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts"
   },
-  "keywords": [
-    "mcp",
-    "food",
-    "restaurant",
-    "ai",
-    "agent",
-    "menami",
-    "recommendations",
-    "booking"
-  ],
+  "keywords": ["mcp", "food", "restaurant", "ai", "agent", "menami", "claude", "anthropic"],
   "license": "MIT",
+  "homepage": "https://getmenami.com",
+  "bugs": {
+    "url": "https://github.com/menami-ai/menami/issues"
+  },
   "repository": {
     "type": "git",
-    "url": "https://github.com/menami-ai/menami.git",
-    "directory": "packages/mcp-server"
-  },
-  "homepage": "https://getmenami.com",
-  "bugs": "https://github.com/menami-ai/menami/issues",
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "open": "^10.0.0"
-  },
-  "devDependencies": {
-    "@types/node": "^25.5.0",
-    "typescript": "^5.0.0"
+    "url": "https://github.com/menami-ai/menami"
   }
 }

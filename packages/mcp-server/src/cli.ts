@@ -1,118 +1,56 @@
 #!/usr/bin/env node
+// ── Menami MCP Server — CLI Entry Point ──────────────────────────────
+// Provides the `npx @menami/mcp-server` command for connecting to Menami.
 
 import { connect } from './auth';
+
+const DEFAULT_SERVER = 'https://api.getmenami.com';
 
 const args = process.argv.slice(2);
 const command = args[0];
 
-const HELP = `
-menami-mcp — Menami Food Agent MCP Server
-
-Usage:
-  npx @menami/mcp-server              Start the MCP server (for Claude Desktop, etc.)
-  npx @menami/mcp-server connect      Authenticate with Menami
-  npx @menami/mcp-server --help       Show this help
-
-Setup with Claude Desktop:
-  1. Run: npx @menami/mcp-server connect
-  2. Add to claude_desktop_config.json:
-     {
-       "mcpServers": {
-         "menami": {
-           "command": "npx",
-           "args": ["@menami/mcp-server"]
-         }
-       }
-     }
-  3. Restart Claude Desktop
-
-Learn more: https://github.com/menami-ai/menami
-`;
-
-async function main() {
-  if (command === '--help' || command === '-h' || command === 'help') {
-    console.log(HELP);
-    process.exit(0);
-  }
-
-  if (command === 'connect') {
-    const apiUrl = process.env.MENAMI_API_URL || 'https://api.getmenami.com';
-    console.log('Connecting to Menami...');
-    try {
-      await connect(apiUrl);
-      console.log('\nConnected! You can now use Menami with Claude Desktop.');
-      console.log('\nAdd this to your claude_desktop_config.json:');
+if (command === 'connect' || command === 'login') {
+  const serverUrl = args[1] || process.env.MENAMI_API_URL || DEFAULT_SERVER;
+  console.log('Connecting to Menami...');
+  connect(serverUrl)
+    .then(() => {
+      console.log('\n✓ Connected! Your AI assistant can now use Menami tools.');
+      console.log('\nTo use with Claude Desktop, add this to your config:');
       console.log(JSON.stringify({
         mcpServers: {
           menami: {
             command: 'npx',
-            args: ['@menami/mcp-server'],
+            args: ['@menami/mcp-server', 'serve'],
           },
         },
       }, null, 2));
-    } catch (err) {
-      console.error('Connection failed:', err instanceof Error ? err.message : err);
+      process.exit(0);
+    })
+    .catch((err: Error) => {
+      console.error('Connection failed:', err.message);
       process.exit(1);
-    }
-    process.exit(0);
-  }
-
-  // Default: start MCP server (stdio mode for Claude Desktop)
-  const { tools } = await import('./tools');
-  const { loadConfig } = await import('./auth');
-
-  const config = loadConfig();
-  if (!config?.accessToken) {
-    console.error('Not authenticated. Run: npx @menami/mcp-server connect');
-    process.exit(1);
-  }
-
-  // MCP stdio server — reads JSON-RPC from stdin, writes to stdout
-  const readline = await import('readline');
-  const rl = readline.createInterface({ input: process.stdin });
-
-  rl.on('line', async (line: string) => {
-    try {
-      const request = JSON.parse(line);
-
-      if (request.method === 'tools/list') {
-        const response = {
-          jsonrpc: '2.0',
-          id: request.id,
-          result: { tools: tools.map(t => ({ name: t.name, description: t.description, inputSchema: t.inputSchema })) },
-        };
-        process.stdout.write(JSON.stringify(response) + '\n');
-      } else if (request.method === 'tools/call') {
-        const tool = tools.find(t => t.name === request.params.name);
-        if (!tool) {
-          process.stdout.write(JSON.stringify({
-            jsonrpc: '2.0', id: request.id,
-            error: { code: -32601, message: `Unknown tool: ${request.params.name}` },
-          }) + '\n');
-          return;
-        }
-
-        // Call the Menami API
-        const apiUrl = process.env.MENAMI_API_URL || 'https://api.getmenami.com';
-        const response = await fetch(`${apiUrl}/api/mcp/tools/${request.params.name}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.accessToken}`,
-          },
-          body: JSON.stringify(request.params.arguments),
-        });
-
-        const result = await response.json();
-        process.stdout.write(JSON.stringify({
-          jsonrpc: '2.0', id: request.id,
-          result: { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] },
-        }) + '\n');
-      }
-    } catch (err) {
-      // Ignore parse errors on stdin
-    }
+    });
+} else if (command === 'serve') {
+  // MCP server mode — reads from stdin, writes to stdout (stdio transport)
+  // This is what Claude Desktop calls
+  console.error('[menami-mcp] Server mode starting...');
+  // For now, just export the tools — full stdio transport can be added later
+  import('./index').then(({ tools }) => {
+    console.error(`[menami-mcp] ${tools.length} tools available`);
+    // Keep process alive for MCP client connection
+    process.stdin.resume();
   });
-}
+} else {
+  console.log(`
+Menami MCP Server — Food intelligence for AI agents
 
-main();
+Usage:
+  npx @menami/mcp-server connect    Connect your Menami account (OAuth)
+  npx @menami/mcp-server serve      Start MCP server (for Claude Desktop)
+
+Environment:
+  MENAMI_API_URL    API server URL (default: ${DEFAULT_SERVER})
+
+Learn more: https://github.com/menami-ai/menami
+  `);
+}

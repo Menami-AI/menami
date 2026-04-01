@@ -22,7 +22,7 @@ program
 program
   .command('login')
   .description('Authenticate with Menami')
-  .option('--server <url>', 'Menami API server URL', 'https://api.menami.com')
+  .option('--server <url>', 'Menami API server URL', 'https://api.getmenami.com')
   .action((opts) => loginAction(opts));
 
 // ── Core commands ─────────────────────────────────────────────────────
@@ -60,7 +60,7 @@ program
 
 program
   .command('onboard')
-  .description('Interactive taste profile setup (interactive wizard)')
+  .description('Interactive taste profile setup (5-step wizard)')
   .action(() => onboardInteractive());
 
 program

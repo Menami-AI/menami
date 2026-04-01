@@ -26,8 +26,8 @@ describe('auth', () => {
 
   describe('buildAuthUrl', () => {
     it('builds correct authorization URL with all params', () => {
-      const url = buildAuthUrl('https://api.menami.com', 'challenge123', 'state456');
-      expect(url).toContain('https://api.menami.com/oauth/authorize');
+      const url = buildAuthUrl('https://api.getmenami.com', 'challenge123', 'state456');
+      expect(url).toContain('https://api.getmenami.com/oauth/authorize');
       expect(url).toContain('code_challenge=challenge123');
       expect(url).toContain('state=state456');
       expect(url).toContain('code_challenge_method=S256');
@@ -46,10 +46,10 @@ describe('auth', () => {
         }),
       });
 
-      await exchangeCode('https://api.menami.com', 'auth_code', 'verifier123');
+      await exchangeCode('https://api.getmenami.com', 'auth_code', 'verifier123');
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.menami.com/oauth/token',
+        'https://api.getmenami.com/oauth/token',
         expect.objectContaining({
           method: 'POST',
           body: expect.stringContaining('auth_code'),
@@ -59,7 +59,7 @@ describe('auth', () => {
         expect.objectContaining({
           accessToken: 'men_access',
           refreshToken: 'men_refresh',
-          serverUrl: 'https://api.menami.com',
+          serverUrl: 'https://api.getmenami.com',
         }),
       );
     });
@@ -71,7 +71,7 @@ describe('auth', () => {
         text: async () => 'Invalid code',
       });
 
-      await expect(exchangeCode('https://api.menami.com', 'bad', 'v'))
+      await expect(exchangeCode('https://api.getmenami.com', 'bad', 'v'))
         .rejects.toThrow('Token exchange failed');
     });
   });

@@ -30,7 +30,7 @@ describe('client', () => {
       accessToken: 'men_abc',
       refreshToken: 'men_ref',
       expiresAt: Date.now() + 60000,
-      serverUrl: 'https://api.menami.com',
+      serverUrl: 'https://api.getmenami.com',
     });
     mockFetch.mockResolvedValue({
       ok: true,
@@ -41,7 +41,7 @@ describe('client', () => {
     const result = await client.get('/profile');
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.menami.com/api/v2/profile',
+      'https://api.getmenami.com/api/v2/profile',
       expect.objectContaining({
         headers: expect.objectContaining({ Authorization: 'Bearer men_abc' }),
       }),
@@ -54,7 +54,7 @@ describe('client', () => {
       accessToken: 'men_abc',
       refreshToken: 'men_ref',
       expiresAt: Date.now() + 60000,
-      serverUrl: 'https://api.menami.com',
+      serverUrl: 'https://api.getmenami.com',
     });
     mockFetch.mockResolvedValue({
       ok: true,
@@ -65,7 +65,7 @@ describe('client', () => {
     await client.post('/feedback', { restaurantId: 'r1', overallRating: 5 });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      'https://api.menami.com/api/v2/feedback',
+      'https://api.getmenami.com/api/v2/feedback',
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ restaurantId: 'r1', overallRating: 5 }),
@@ -78,7 +78,7 @@ describe('client', () => {
       accessToken: 'men_abc',
       refreshToken: 'men_ref',
       expiresAt: Date.now() + 60000,
-      serverUrl: 'https://api.menami.com',
+      serverUrl: 'https://api.getmenami.com',
     });
     mockFetch.mockResolvedValue({
       ok: false,
@@ -95,7 +95,7 @@ describe('client', () => {
       accessToken: 'men_expired',
       refreshToken: 'men_ref',
       expiresAt: Date.now() - 1000,
-      serverUrl: 'https://api.menami.com',
+      serverUrl: 'https://api.getmenami.com',
     });
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -121,7 +121,7 @@ describe('client', () => {
       accessToken: 'men_abc',
       refreshToken: 'men_ref',
       expiresAt: Date.now() + 60000,
-      serverUrl: 'https://api.menami.com',
+      serverUrl: 'https://api.getmenami.com',
     });
     mockFetch.mockResolvedValue({ ok: true, json: async () => ({}) });
 

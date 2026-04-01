@@ -1,51 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockGeneratePkce = vi.fn();
-const mockBuildAuthUrl = vi.fn();
-const mockWaitForCallback = vi.fn();
-const mockExchangeCode = vi.fn();
+const mockLoginFlow = vi.fn();
 
 vi.mock('../../auth.js', () => ({
-  generatePkce: () => mockGeneratePkce(),
-  buildAuthUrl: (...args: any[]) => mockBuildAuthUrl(...args),
-  waitForCallback: (...args: any[]) => mockWaitForCallback(...args),
-  exchangeCode: (...args: any[]) => mockExchangeCode(...args),
+  loginFlow: (...args: any[]) => mockLoginFlow(...args),
 }));
-
-vi.mock('open', () => ({ default: vi.fn() }));
 
 import { loginAction } from '../../commands/login.js';
 
 describe('login command', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('runs full login flow', async () => {
-    mockGeneratePkce.mockReturnValue({ verifier: 'v', challenge: 'c' });
-    mockBuildAuthUrl.mockReturnValue('https://api.getmenami.com/oauth/authorize?...');
-    mockWaitForCallback.mockResolvedValue('auth_code_123');
-    mockExchangeCode.mockResolvedValue(undefined);
+  it('calls loginFlow with the server URL', async () => {
+    mockLoginFlow.mockResolvedValue(undefined);
 
-    const logs: string[] = [];
-    await loginAction({ server: 'https://api.getmenami.com' }, (msg: string) => logs.push(msg));
+    await loginAction({ server: 'https://api.getmenami.com' });
 
-    expect(mockExchangeCode).toHaveBeenCalledWith('https://api.getmenami.com', 'auth_code_123', 'v');
-    expect(logs.some(l => l.includes('Connected'))).toBe(true);
+    expect(mockLoginFlow).toHaveBeenCalledWith('https://api.getmenami.com');
   });
 
-  it('handles authorization errors gracefully', async () => {
-    mockGeneratePkce.mockReturnValue({ verifier: 'v', challenge: 'c' });
-    mockBuildAuthUrl.mockReturnValue('https://...');
-    mockWaitForCallback.mockRejectedValue(new Error('Authorization timed out'));
+  it('strips trailing slash from server URL', async () => {
+    mockLoginFlow.mockResolvedValue(undefined);
 
-    const logs: string[] = [];
-    const errLogs: string[] = [];
+    await loginAction({ server: 'https://api.getmenami.com/' });
 
-    await loginAction(
-      { server: 'https://api.getmenami.com' },
-      (msg: string) => logs.push(msg),
-      (msg: string) => errLogs.push(msg),
-    );
-
-    expect(errLogs.some(l => l.includes('timed out'))).toBe(true);
+    expect(mockLoginFlow).toHaveBeenCalledWith('https://api.getmenami.com');
   });
 });

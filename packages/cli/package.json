@@ -1,11 +1,12 @@
 {
   "name": "@menami/cli",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Menami Food Agent CLI — the food intelligence layer for the agentic internet",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "menami": "./dist/index.js"
+    "menami": "./dist/index.js",
+    "menami-cli": "./dist/index.js"
   },
   "scripts": {
     "build": "tsc",

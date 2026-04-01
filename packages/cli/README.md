@@ -14,10 +14,14 @@ Or run directly:
 npx menami recommend "best ramen in NYC"
 ```
 
+## Why Phone Number?
+
+Menami gives you personalized restaurant recommendations. To personalize, we need to know who you are. Your phone number is your Menami identity — it works across SMS, WhatsApp, CLI, and any AI assistant. No API keys to manage, no OAuth flows to configure. Text us or run a command — same account, same taste profile, same bookings.
+
 ## Quick Start
 
 ```bash
-# 1. Login (opens browser for OAuth)
+# 1. Login (enter your phone number, get a code via SMS or WhatsApp)
 menami login
 
 # 2. Complete your taste profile

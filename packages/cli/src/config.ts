@@ -15,6 +15,8 @@ export interface MenamiConfig {
   refreshToken: string;
   expiresAt: number;
   serverUrl: string;
+  phone?: string;
+  channel?: 'sms' | 'whatsapp';
   defaultCity?: string;
 }
 

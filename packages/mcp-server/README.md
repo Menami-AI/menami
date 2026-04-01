@@ -10,7 +10,7 @@
 npx @menami/mcp-server connect
 ```
 
-This opens a browser window for OAuth authentication. Your tokens are saved to `~/.menami/config.json`.
+Enter your phone number and receive a verification code via SMS or WhatsApp. Your phone number is your Menami identity — no API keys, no OAuth. Same account whether you text Menami or use the CLI.
 
 ### 2. Add to Claude Desktop
 

@@ -1,102 +1,115 @@
-import * as crypto from 'crypto';
-import * as http from 'http';
-import * as url from 'url';
+// ── Menami CLI — Phone Number Authentication ──────────────────────────
+// Authenticate by phone number + verification code.
+// Your phone number is your identity across SMS, WhatsApp, CLI, and MCP.
+
+import * as readline from 'readline';
 import { saveConfig } from './config.js';
 
-const CALLBACK_PORT = 19284;
-const CALLBACK_PATH = '/callback';
-
-export function generatePkce(): { verifier: string; challenge: string } {
-  const verifier = crypto.randomBytes(32).toString('base64url');
-  const challenge = crypto.createHash('sha256').update(verifier).digest('base64url');
-  return { verifier, challenge };
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
 }
 
-export function buildAuthUrl(serverUrl: string, codeChallenge: string, state: string): string {
-  const authUrl = new URL(`${serverUrl}/oauth/authorize`);
-  authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('redirect_uri', `http://localhost:${CALLBACK_PORT}${CALLBACK_PATH}`);
-  authUrl.searchParams.set('code_challenge', codeChallenge);
-  authUrl.searchParams.set('code_challenge_method', 'S256');
-  authUrl.searchParams.set('state', state);
-  return authUrl.toString();
+export async function promptPhone(): Promise<string> {
+  const phone = await prompt('\n  Phone number (e.g. +1 555 123 4567): ');
+  // Normalize: strip spaces, dashes, parens
+  const normalized = phone.replace(/[\s\-\(\)]/g, '');
+  if (!normalized.startsWith('+') || normalized.length < 10) {
+    throw new Error('Please enter a valid phone number with country code (e.g. +1 5551234567)');
+  }
+  return normalized;
 }
 
-export async function exchangeCode(serverUrl: string, code: string, codeVerifier: string): Promise<void> {
-  const res = await fetch(`${serverUrl}/oauth/token`, {
+export async function promptChannel(): Promise<'sms' | 'whatsapp'> {
+  console.log('\n  How would you like to receive your code?');
+  console.log('  1) SMS');
+  console.log('  2) WhatsApp');
+  const choice = await prompt('  > ');
+  if (choice === '2' || choice.toLowerCase() === 'whatsapp') return 'whatsapp';
+  return 'sms';
+}
+
+export async function promptCode(): Promise<string> {
+  const code = await prompt('\n  Enter the 6-digit code: ');
+  return code.trim();
+}
+
+export async function sendCode(
+  serverUrl: string,
+  phone: string,
+  channel: string,
+): Promise<void> {
+  const res = await fetch(`${serverUrl}/api/v2/auth/send-code`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: `http://localhost:${CALLBACK_PORT}${CALLBACK_PATH}`,
-      code_verifier: codeVerifier,
-    }),
+    body: JSON.stringify({ phone, channel }),
   });
 
   if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(`Token exchange failed (${res.status}): ${errorText}`);
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || `Failed to send code (${res.status})`);
   }
 
-  const tokens = await res.json();
-
-  saveConfig({
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-    expiresAt: Date.now() + tokens.expires_in * 1000,
-    serverUrl,
-  });
+  // In dev mode, the API returns the code
+  const data = await res.json();
+  if (data.code) {
+    console.log(`\n  [DEV] Your code is: ${data.code}`);
+  }
 }
 
-export function waitForCallback(expectedState: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const server = http.createServer((req, res) => {
-      const parsed = url.parse(req.url || '', true);
-
-      if (parsed.pathname !== CALLBACK_PATH) {
-        res.writeHead(404);
-        res.end('Not found');
-        return;
-      }
-
-      const { code, state, error } = parsed.query;
-
-      if (error) {
-        res.writeHead(400);
-        res.end(`Authorization error: ${error}`);
-        server.close();
-        reject(new Error(`Authorization error: ${error}`));
-        return;
-      }
-
-      if (state !== expectedState) {
-        res.writeHead(400);
-        res.end('State mismatch');
-        server.close();
-        reject(new Error('State mismatch'));
-        return;
-      }
-
-      if (!code || typeof code !== 'string') {
-        res.writeHead(400);
-        res.end('Missing authorization code');
-        server.close();
-        reject(new Error('Missing authorization code'));
-        return;
-      }
-
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end('<html><body style="font-family:system-ui;display:flex;justify-content:center;align-items:center;height:100vh;margin:0"><div style="text-align:center"><h1 style="color:#D95A28">Connected to Menami</h1><p>You can close this window and return to your terminal.</p></div></body></html>');
-      server.close();
-      resolve(code);
-    });
-
-    server.listen(CALLBACK_PORT);
-
-    setTimeout(() => {
-      server.close();
-      reject(new Error('Authorization timed out (5 minutes)'));
-    }, 5 * 60 * 1000);
+export async function authenticate(
+  serverUrl: string,
+  phone: string,
+  code: string,
+  channel: string,
+): Promise<{ accessToken: string; refreshToken: string; expiresIn: number }> {
+  const res = await fetch(`${serverUrl}/api/v2/auth/phone`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code, channel }),
   });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.error || `Authentication failed (${res.status})`);
+  }
+
+  return res.json();
+}
+
+export async function loginFlow(serverUrl: string): Promise<void> {
+  console.log('\n  Welcome to Menami — your personal food agent.\n');
+  console.log('  Menami gives you personalized restaurant recommendations,');
+  console.log('  books tables, and hunts cancellations at impossible-to-get');
+  console.log('  restaurants.\n');
+  console.log('  Your phone number is your Menami identity — it works across');
+  console.log('  SMS, WhatsApp, CLI, and any AI assistant.');
+
+  const phone = await promptPhone();
+  const channel = await promptChannel();
+
+  console.log(`\n  Sending code via ${channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}...`);
+  await sendCode(serverUrl, phone, channel);
+
+  console.log('  Code sent!');
+  const code = await promptCode();
+
+  const tokens = await authenticate(serverUrl, phone, code, channel);
+
+  saveConfig({
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresAt: Date.now() + tokens.expiresIn * 1000,
+    serverUrl,
+    phone,
+    channel,
+  });
+
+  console.log('\n  ✓ Welcome to Menami! You\'re all set.\n');
+  console.log('  Try: menami recommend "best tacos in SF"\n');
 }

@@ -1,41 +1,22 @@
-// ── Menami MCP Server — OAuth Authentication ──────────────────────────
-// Opens browser-based OAuth flow, receives callback, and saves tokens
-// to ~/.menami/config.json for Claude Desktop and other MCP clients.
+// ── Menami MCP Server — Phone Number Authentication ───────────────────
+// Authenticate by phone number + verification code.
+// Saves tokens to ~/.menami/config.json for Claude Desktop and other MCP clients.
 
-import * as crypto from 'crypto';
 import * as fs from 'fs';
-import * as http from 'http';
 import * as os from 'os';
 import * as path from 'path';
-import * as url from 'url';
+import * as readline from 'readline';
 
 const CONFIG_DIR = path.join(os.homedir(), '.menami');
 const CONFIG_PATH = path.join(CONFIG_DIR, 'config.json');
-const CALLBACK_PORT = 19284;
-const CALLBACK_PATH = '/callback';
-
-interface TokenResponse {
-  access_token: string;
-  refresh_token: string;
-  expires_in: number;
-  token_type: string;
-}
 
 interface MenamiConfig {
   accessToken: string;
   refreshToken: string;
   expiresAt: number;
   serverUrl: string;
-}
-
-// ── PKCE helpers ──────────────────────────────────────────────────────
-
-function generateCodeVerifier(): string {
-  return crypto.randomBytes(32).toString('base64url');
-}
-
-function generateCodeChallenge(verifier: string): string {
-  return crypto.createHash('sha256').update(verifier).digest('base64url');
+  phone: string;
+  channel: string;
 }
 
 // ── Config persistence ────────────────────────────────────────────────
@@ -69,164 +50,87 @@ export function clearConfig(): void {
   }
 }
 
-// ── OAuth connect flow ────────────────────────────────────────────────
+// ── Prompts ───────────────────────────────────────────────────────────
 
-/**
- * Runs the full OAuth PKCE flow:
- * 1. Generate PKCE code verifier + challenge
- * 2. Open browser to authorization URL
- * 3. Start local HTTP server to receive callback
- * 4. Exchange authorization code for tokens
- * 5. Save tokens to ~/.menami/config.json
- */
-export async function connect(mcpServerUrl: string): Promise<void> {
-  const serverUrl = mcpServerUrl.replace(/\/$/, '');
-  const redirectUri = `http://localhost:${CALLBACK_PORT}${CALLBACK_PATH}`;
-
-  // Step 1: Generate PKCE pair
-  const codeVerifier = generateCodeVerifier();
-  const codeChallenge = generateCodeChallenge(codeVerifier);
-  const state = crypto.randomBytes(16).toString('hex');
-
-  // Step 2: Build authorization URL
-  const authUrl = new URL(`${serverUrl}/oauth/authorize`);
-  authUrl.searchParams.set('response_type', 'code');
-  authUrl.searchParams.set('redirect_uri', redirectUri);
-  authUrl.searchParams.set('code_challenge', codeChallenge);
-  authUrl.searchParams.set('code_challenge_method', 'S256');
-  authUrl.searchParams.set('state', state);
-
-  console.log('\nOpening browser for Menami authorization...\n');
-  console.log(`If the browser doesn't open, visit:\n${authUrl.toString()}\n`);
-
-  // Open browser (cross-platform)
-  const openCommand =
-    process.platform === 'darwin'
-      ? 'open'
-      : process.platform === 'win32'
-        ? 'start'
-        : 'xdg-open';
-
-  const { exec } = await import('child_process');
-  exec(`${openCommand} "${authUrl.toString()}"`);
-
-  // Step 3: Start local server to receive the callback
-  const code = await waitForCallback(state);
-
-  // Step 4: Exchange code for tokens
-  const tokenUrl = `${serverUrl}/oauth/token`;
-  const tokenBody = JSON.stringify({
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: redirectUri,
-    code_verifier: codeVerifier,
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
   });
-
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: tokenBody,
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Token exchange failed (${response.status}): ${errorText}`);
-  }
-
-  const tokens = (await response.json()) as TokenResponse;
-
-  // Step 5: Save tokens
-  const config: MenamiConfig = {
-    accessToken: tokens.access_token,
-    refreshToken: tokens.refresh_token,
-    expiresAt: Date.now() + tokens.expires_in * 1000,
-    serverUrl,
-  };
-
-  saveConfig(config);
-
-  console.log('Connected to Menami successfully!');
-  console.log(`Config saved to ${CONFIG_PATH}\n`);
-  console.log('Add this to your Claude Desktop config (claude_desktop_config.json):\n');
-  console.log(
-    JSON.stringify(
-      {
-        mcpServers: {
-          menami: {
-            command: 'npx',
-            args: ['@menami/mcp-server'],
-          },
-        },
-      },
-      null,
-      2,
-    ),
-  );
 }
 
-// ── Callback server ───────────────────────────────────────────────────
+// ── Phone connect flow ────────────────────────────────────────────────
 
-function waitForCallback(expectedState: string): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const server = http.createServer((req, res) => {
-      const parsed = url.parse(req.url || '', true);
+export async function connect(mcpServerUrl: string): Promise<void> {
+  const serverUrl = mcpServerUrl.replace(/\/$/, '');
 
-      if (parsed.pathname !== CALLBACK_PATH) {
-        res.writeHead(404);
-        res.end('Not found');
-        return;
-      }
+  console.log('\n  Welcome to Menami — your personal food agent.\n');
+  console.log('  Your phone number is your Menami identity — it works across');
+  console.log('  SMS, WhatsApp, CLI, and any AI assistant.\n');
 
-      const { code, state, error } = parsed.query;
+  // Phone number
+  const phoneRaw = await prompt('  Phone number (e.g. +1 555 123 4567): ');
+  const phone = phoneRaw.replace(/[\s\-\(\)]/g, '');
+  if (!phone.startsWith('+') || phone.length < 10) {
+    throw new Error('Please enter a valid phone number with country code');
+  }
 
-      if (error) {
-        res.writeHead(400);
-        res.end(`Authorization error: ${error}`);
-        server.close();
-        reject(new Error(`Authorization error: ${error}`));
-        return;
-      }
+  // Channel choice
+  console.log('\n  How would you like to receive your code?');
+  console.log('  1) SMS');
+  console.log('  2) WhatsApp');
+  const channelChoice = await prompt('  > ');
+  const channel = (channelChoice === '2' || channelChoice.toLowerCase() === 'whatsapp') ? 'whatsapp' : 'sms';
 
-      if (state !== expectedState) {
-        res.writeHead(400);
-        res.end('State mismatch — possible CSRF attack');
-        server.close();
-        reject(new Error('State mismatch'));
-        return;
-      }
+  // Send code
+  console.log(`\n  Sending code via ${channel === 'whatsapp' ? 'WhatsApp' : 'SMS'}...`);
 
-      if (!code || typeof code !== 'string') {
-        res.writeHead(400);
-        res.end('Missing authorization code');
-        server.close();
-        reject(new Error('Missing authorization code'));
-        return;
-      }
-
-      res.writeHead(200, { 'Content-Type': 'text/html' });
-      res.end(`
-        <html>
-          <body style="font-family: system-ui; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0;">
-            <div style="text-align: center;">
-              <h1 style="color: #D95A28;">Connected to Menami</h1>
-              <p>You can close this window and return to your terminal.</p>
-            </div>
-          </body>
-        </html>
-      `);
-
-      server.close();
-      resolve(code);
-    });
-
-    server.listen(CALLBACK_PORT, () => {
-      // Server ready, waiting for browser callback
-    });
-
-    // Timeout after 5 minutes
-    setTimeout(() => {
-      server.close();
-      reject(new Error('Authorization timed out (5 minutes)'));
-    }, 5 * 60 * 1000);
+  const sendRes = await fetch(`${serverUrl}/api/v2/auth/send-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, channel }),
   });
+
+  if (!sendRes.ok) {
+    const body = await sendRes.json().catch(() => null);
+    throw new Error(body?.error || `Failed to send code (${sendRes.status})`);
+  }
+
+  const sendData = await sendRes.json();
+  if (sendData.code) {
+    console.log(`\n  [DEV] Your code is: ${sendData.code}`);
+  }
+
+  console.log('  Code sent!');
+  const code = await prompt('\n  Enter the 6-digit code: ');
+
+  // Authenticate
+  const authRes = await fetch(`${serverUrl}/api/v2/auth/phone`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, code, channel }),
+  });
+
+  if (!authRes.ok) {
+    const body = await authRes.json().catch(() => null);
+    throw new Error(body?.error || `Authentication failed (${authRes.status})`);
+  }
+
+  const tokens = await authRes.json();
+
+  // Save config
+  saveConfig({
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresAt: Date.now() + tokens.expiresIn * 1000,
+    serverUrl,
+    phone,
+    channel,
+  });
+
+  console.log('\n  ✓ Connected! Your AI assistant can now use Menami tools.\n');
+  console.log(`  Config saved to ${CONFIG_PATH}\n`);
 }
